@@ -1,246 +1,252 @@
 # Fincan Arası
 
-Fincan Arası, tek bir kafe için tasarlanan geri bildirim web uygulamasıdır. Müşteriler hesap oluşturmadan öneri, sorun veya teşekkür iletebilir; işletme yöneticisi ise ayrı bir çalışma alanında kayıtları arayıp filtreleyebilir, durum ve iç not alanlarını yönetebilir.
+Fincan Arası, tek bir kafenin dağınık sözlü geri bildirimleri güvenli ve izlenebilir bir dijital akışta toplaması için geliştirilmiş ders projesidir. Müşteriler hesap açmadan öneri, sorun veya teşekkür iletir; önceden tanımlanmış tek yönetici ise bu kayıtları ayrı bir çalışma alanında değerlendirir.
 
-Bu depo **Aşama 2 uygulamasını** içerir. Aşama 1'in bellek içi demo modu korunmuştur; bunun yanında bağlı Supabase projesinde PostgreSQL migration'ları, Auth tabanlı tek yönetici girişi, parola kurtarma, korumalı RPC'ler ve doğrulanan müşteri Edge Function'ı kurulmuştur. Gerçek yönetici CRUD, yenileme kalıcılığı ve test kaydı temizliği doğrulanmıştır.
+- Canlı uygulama: [https://fincan-arasi.netlify.app](https://fincan-arasi.netlify.app)
+- Kaynak kod: [https://github.com/rna03/fincan-arasi](https://github.com/rna03/fincan-arasi)
+- Production kaynağı: GitHub `main` dalı, yayımlanan uygulama commit'i `2bd95c3`
 
-Kaynak kodu [GitHub'daki `rna03/fincan-arasi` deposunda](https://github.com/rna03/fincan-arasi) tutulur. Canlı uygulama adresi: [https://fincan-arasi.netlify.app](https://fincan-arasi.netlify.app).
+## Problem, çözüm ve kullanıcılar
+
+Kafelerde fikirler çoğunlukla sözlü iletilir, kaybolur veya daha sonra hangi adımın atıldığı izlenemez. Fincan Arası bunu iki yüzlü bir uygulamayla çözer:
+
+| Kullanıcı | Yetki ve sorumluluk |
+| --- | --- |
+| Müşteri | Kimlik veya iletişim bilgisi vermeden tür, kategori, başlık ve açıklama ile yeni geri bildirim **oluşturur**. Başka kayıtları okuyamaz; durum, iç not veya geçmiş alanlarına erişemez. |
+| Yönetici | Allowlist ve aktif Supabase Auth oturumu doğrulandıktan sonra kayıtları **okur**, arar ve filtreler; yalnız durum ile iç notu **günceller**; kayıt ve bağlı geçmişi **siler**. |
+
+CRUD eşlemesi bilinçli olarak sınırlıdır: müşteri `Create`; yönetici `Read`, yönetim alanlarında `Update` ve onaylı `Delete` yapar. Müşterinin özgün başlık ve açıklaması yönetici tarafından değiştirilemez. Yetki yalnız arayüzde bırakılmaz; yönetici RPC'leri aktif session ve allowlist'i sunucuda yeniden denetler.
 
 ## Özellikler
 
-- Kısa, mobil uyumlu müşteri geri bildirim akışı
-- Tür ve kategori seçimi, alan bazlı doğrulama ve karakter sayaçları
-- Gönderim, hata ve başarı durumları
-- Yönetici için arama, tür/kategori/durum filtreleri ve dinamik özetler
-- Kayıt detayı, iç not, durum değişikliği ve durum geçmişi
-- Onay isteyen silme akışı
-- Yalnız açık geliştirme yapılandırmasında görünen kontrollü demo test durumları
-- Supabase Auth e-posta/şifre girişi ve kullanıcıdan ayrı korumalı yönetici allowlist'i
-- Hesap varlığını açıklamayan, Turnstile tokenı iletmeye hazır parola kurtarma isteği; yeni şifre ve geçersiz/süresi dolmuş bağlantı ekranları
-- RLS + daraltılmış grant'ler + yalnız izin verilen işlemleri sunan RPC katmanı
-- Turnstile, kalıcı hız sınırı ve idempotency kullanan public müşteri Edge Function'ı
-- Canlı listede sunucu tarafı birleşik filtreleme, 20 kayıtlık sayfalama ve tüm veri kümesini temsil eden özetler
-- Klavye odağı, azaltılmış hareket tercihi ve erişilebilir form/modal davranışları hedefi
+- Mobil uyumlu, kısa müşteri formu; alan doğrulaması ve karakter sayaçları
+- Öneri / sorun / teşekkür türleri ile Menü / Hizmet / Atmosfer / Diğer kategorileri
+- Cloudflare Turnstile korumalı canlı gönderim
+- Arama ve tür, kategori, durum filtrelerini birlikte kullanan yönetici listesi
+- Kayıt detayı, durum, iç not, durum geçmişi ve kategori özeti
+- Optimistic concurrency ile çakışma bildirimi ve geçmişle birlikte onaylı silme
+- Supabase Auth e-posta/şifre girişi, nötr parola kurtarma ve yeni şifre ekranları
+- RLS, daraltılmış grant'ler ve allowlist/aktif-session kontrollü RPC katmanı
+- Edge Function içinde yöntem, origin, içerik türü, 10 KiB akış gövdesi, enum/uzunluk, Turnstile, rate-limit ve idempotency doğrulaması
+- Geliştirme araçlarını yalnız açık demo yapılandırmasında gösteren güvenli mod ayrımı
 
 ## Teknolojiler
-
-Kurulum 6 Kasım 2026 tarihinde güncel resmî belgeler ve yerel Node sürümüyle doğrulanan uyumlu hat üzerinden hazırlanmıştır.
 
 | Teknoloji | Sürüm hattı | Kullanım |
 | --- | --- | --- |
 | React / React DOM | 19.3.1 | Arayüz ve durum yönetimi |
-| React Router | 7.18.5 | İstemci tarafı sayfalar |
-| Vite | 8.3.6 | Geliştirme sunucusu ve production build |
-| Tailwind CSS + Vite eklentisi | 4.3.5 | Stil sistemi |
-| Lucide React | 1.70.0 | Tutarlı arayüz ikonları |
+| React Router | 7.18.5 | SPA route'ları |
+| Vite | 8.3.6 | Geliştirme ve production build |
+| Tailwind CSS | 4.3.x | Tasarım sistemi |
 | Supabase JS | 2.119.0 | Auth, RPC ve Edge Function istemcisi |
-| Vitest | 5.1.0 | Birim ve servis testleri |
-| ESLint / @eslint/js | 9.39.5 | Statik kod kontrolü |
+| PostgreSQL / pgTAP | Supabase tarafından yönetilir | Veri, RLS, RPC ve veritabanı güvenlik testleri |
+| Cloudflare Turnstile | Managed widget | Müşteri, giriş ve recovery bot koruması |
+| Vitest / ESLint | 5.1.0 / 9.39.5 | Birim-servis testi ve statik kontrol |
+| GitHub / Netlify | Free plan | Sürüm kontrolü ve `main` dalından canlı yayın |
 
-Tailwind v4 kurulumu `@tailwindcss/vite` ve CSS içindeki `@import "tailwindcss";` üzerinden yapılır. Eski `tailwindcss init -p` akışı kullanılmaz.
+Geliştirme için Node.js 22.18.0 veya üzeri ve npm 10+ kullanın.
 
-## Gereksinimler
-
-- Node.js **22.18.0 veya üzeri**
-- npm 10 veya üzeri
-
-Vite 8 için resmî alt sınır Node 22 hattında 22.12'dir; proje yerelde Node 22.18.0 ile hazırlanmıştır.
-
-## Kurulum ve çalıştırma
+## Kurulum
 
 ```bash
+git clone https://github.com/rna03/fincan-arasi.git
+cd fincan-arasi
 npm install
+```
+
+Bellek içi demo modu:
+
+```bash
 npm run dev
 ```
 
-Geliştirme sunucusunun yazdığı yerel adresi tarayıcıda açın. `npm run dev`, veri modunu açıkça `demo` olarak ayarlar; eksik backend yapılandırması nedeniyle sessiz bir demo geri dönüşü yapılmaz.
-
-Diğer komutlar:
+Gerçek Supabase modu, aşağıdaki browser-safe ortam değerleri sağlandıktan sonra:
 
 ```bash
-npm run test       # Birim ve demo servis testleri
-npm run test:watch # Testleri izleme modunda çalıştırır
-npm run lint       # ESLint kontrolü
-npm run build      # Demo yapılandırmasıyla production build
-npm run preview    # Oluşturulan dist çıktısını yerelde önizler
-npm run dev:tools  # Demo hata/yükleme araçlarını açıkça etkinleştirir
-npm run dev:live   # Ortam değerleri hazırsa gerçek Supabase veri modu
-npm run build:live # Gerçek mod yapılandırmasıyla build; canlı env değerlerini gerektirir
-npm run test:db    # Çalışan yerel Supabase stack üzerinde pgTAP güvenlik testleri
+npm run dev:live
 ```
 
-`dev:live`, URL, publishable key veya Turnstile site key eksikse demoya düşmez; kurulum belgesine yönlendiren açık hata gösterir.
+Örnek isimler [.env.example](./.env.example) dosyasındadır. Gerçek değerler `.env.local` içinde tutulur ve Git'e alınmaz.
 
-## Yapılandırma
-
-Örnek değerler [.env.example](./.env.example) dosyasındadır.
-
-| Değişken | Açıklama |
+| Değişken | Amaç |
 | --- | --- |
-| `VITE_DATA_MODE` | Zorunlu veri kaynağı seçimi: `demo` veya `supabase` |
-| `VITE_ENABLE_DEMO_TOOLS` | Yalnız `true` verildiğinde kontrollü hata/yükleme araçlarını gösterir; normal demo varsayılanı kapalıdır |
-| `VITE_SUPABASE_URL` | Aşama 2'de tarayıcının kullanacağı proje URL'si |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Aşama 2'de tarayıcıda kullanılabilen publishable anahtar |
-| `VITE_TURNSTILE_SITE_KEY` | Tarayıcıda kullanılabilen Turnstile site key; gerçek modda zorunlu |
+| `VITE_DATA_MODE` | Açık veri modu: `demo` veya `supabase` |
+| `VITE_ENABLE_DEMO_TOOLS` | Yalnız demo modunda ve açıkça `true` ise test araçları |
+| `VITE_SUPABASE_URL` | Browser-safe Supabase proje URL'si |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Browser-safe publishable anahtar |
+| `VITE_TURNSTILE_SITE_KEY` | Browser-safe Turnstile site key |
 
-Supabase secret/service-role anahtarı ve Turnstile secret frontend'e, repoya veya `VITE_` değişkenine konmamalıdır. Server-only örnekler `supabase/functions/.env.example` içindedir.
+Supabase secret/service-role anahtarı, Turnstile secret ve rate-limit hash secret hiçbir `VITE_` değişkenine, frontend build'ine veya Git deposuna konmaz. Sunucu tarafı örnek isimler `supabase/functions/.env.example` içindedir.
 
-## Sayfalar
+## Demo ve canlı mod farkı
 
-| Yol | Amaç |
+| Konu | Demo | Canlı |
+| --- | --- | --- |
+| Veri | Modül belleğindeki kurgusal kayıtlar | Supabase PostgreSQL |
+| Kalıcılık | Tam sayfa yenilemede başlangıç verisine döner | Yetkili gerçek CRUD ve yenileme kalıcılığı |
+| Yönetici girişi | Şifresiz arayüz önizlemesi; gerçek auth değildir | Supabase Auth + aktif session + allowlist |
+| İnsan doğrulaması | Kullanılmaz | Turnstile istemci ve sunucu doğrulaması |
+| Test araçları | Yalnız `npm run dev:tools` | Production build'de kapalı |
+
+Demo ekranına gerçek veya kişisel veri girilmemelidir. Eksik canlı yapılandırma sessizce demoya düşmez; açık yapılandırma hatası verir.
+
+## Route'lar
+
+| Yol | Ekran |
 | --- | --- |
-| `/` | Müşteri geri bildirim formu |
-| `/yonetici/giris` | Demo modunda ayrı önizleme; gerçek modda Supabase e-posta/şifre girişi |
-| `/yonetici/sifremi-unuttum` | Hesap varlığını açıklamayan parola sıfırlama e-postası isteği |
-| `/yonetici/sifre-yenile` | Supabase kurtarma bağlantısından yeni şifre belirleme |
-| `/yonetici` | Demo veya yetkilendirilmiş Supabase servisiyle çalışan korumalı yönetim paneli |
+| `/` | Müşteri geri bildirim formu ve başarı durumu |
+| `/yonetici/giris` | Yönetici girişi |
+| `/yonetici/sifremi-unuttum` | Nötr parola kurtarma isteği |
+| `/yonetici/sifre-yenile` | Yeni şifre veya geçersiz/süresi dolmuş bağlantı durumu |
+| `/yonetici` | Korumalı yönetici çalışma alanı |
+| Diğer yollar | Markalı 404 sayfası |
 
-Demo yönetici önizlemesi şifresizdir ve yalnız Aşama 1 arayüzünü incelemek içindir. Gerçek bir yönetici oturumu veya yetkilendirme kanıtı değildir.
-
-Gerçek modda demo önizleme bağlantısı gösterilmez. Route koruması yalnız veri sızıntısını önleyen bir frontend katmanıdır; asıl yetki kontrolü her RPC içinde ve veritabanı grant/RLS kurallarında yeniden yapılır.
-
-## Demo veri davranışı
-
-Demo servis tek bir uygulama oturumunda müşteri formu ile yönetici panelinin aynı kayıtları görmesini sağlar. Ekleme, okuma, yönetici alanlarını güncelleme ve silme işlemleri yalnızca tarayıcı belleğinde gerçekleşir.
-
-- Tam sayfa yenilendiğinde veriler başlangıç örneklerine döner.
-- React Router bağlantıları tam sayfa yenilemeden geçiş yapar; bu nedenle müşteri gönderimi aynı SPA oturumunda yönetici önizlemesinde görünür.
-- Demo başarıları gerçek veritabanı yazımı veya gerçek yetkilendirme anlamına gelmez.
-- Hatalar rastgele üretilmez; yalnız `npm run dev:tools` veya servis testi tarafından açıkça tetiklenir.
-- Aynı durum tekrar kaydedildiğinde gereksiz durum geçmişi oluşturulmaması hedeflenir ve test edilir.
-
-Demo ekranında gerçek veya kişisel bilgi girilmemelidir. “Yalnızca işletme yetkilisi görür” güvencesi demo için kullanılmaz; gerçek modda erişim Supabase Auth, aktif session, allowlist ve yönetici RPC kontrolleriyle uygulanır.
-
-## Netlify yayın yapılandırması
-
-Kök dizindeki `netlify.toml` teslim ayarlarını sabitler:
-
-| Ayar | Değer |
-| --- | --- |
-| Build komutu | `npm run build:live` |
-| Yayın klasörü | `dist` |
-| Node hattı | `22` |
-
-Netlify projesi GitHub `main` dalına sürekli yayın için bağlanmıştır. Production origin'i `https://fincan-arasi.netlify.app`; Supabase Auth Site URL, tam recovery redirect yolu ve Edge origin/hostname allowlist'i bu adresle sınırlandırılmıştır.
-
-`public/_redirects`, React Router yollarını doğrudan açma ve yenileme için `index.html` SPA fallback'ini sağlar. `public/_headers` CSP, HSTS, `nosniff`, frame, referrer ve Permissions-Policy başlıklarını içerir. Vite build sırasında iki dosya da `dist/` içine kopyalanır.
-
-Netlify build ortamında yalnız şu browser-safe frontend değişkenleri tanımlanmalıdır:
-
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_PUBLISHABLE_KEY`
-- `VITE_TURNSTILE_SITE_KEY`
-
-`VITE_DATA_MODE` değerini `build:live` komutu `supabase` olarak sabitler. `VITE_ENABLE_DEMO_TOOLS` canlı build'de etkinleştirilmemelidir. `SUPABASE_SECRET_KEYS`, `TURNSTILE_SECRET_KEY`, `RATE_LIMIT_HASH_SECRET` ve diğer server secret'ları Netlify frontend ortamına konmaz; Supabase Edge Function ortamında kalır.
-
-### Varsayılan Auth e-posta servisinin sınırları
-
-Bu ders demosunda özel SMTP sağlayıcısı kurulmamıştır. Supabase'in varsayılan e-posta servisi yalnız proje organizasyonunun ekip üyesi olan önceden yetkilendirilmiş adreslere gönderim yapar; mevcut sınır proje başına saatte **2 e-posta**dır ve sağlayıcı tarafından değiştirilebilir. Hizmet best-effort çalışır, teslim/çalışabilirlik SLA'sı sunmaz ve üretim kullanımı için tasarlanmamıştır. Gerçek yönetici adresi organizasyona eklenerek tek parola-kurtarma e-postası başarıyla teslim edilmiştir.
-
-Geçerli CAPTCHA altında kayıtlı ve kurgusal kayıt-dışı ilk recovery istekleri aynı başarılı HTTP ve nötr arayüz sonucunu vermiştir. E-posta kotasını tüketmemek için 60 saniyelik kullanıcı penceresindeki tekrarlı yanıt matrisi çalıştırılmadı; bu zamanlama kaynaklı hesap-varlığı riski açık tutulur. Gerçek müşteri yayını öncesinde doğrulanmış gönderici alan adı olan özel SMTP ve yeniden regresyon testi gerekir. Güncel sınırlar için [Supabase Auth SMTP rehberine](https://supabase.com/docs/guides/auth/auth-smtp) bakın.
-
-### Ücretsiz planlarda iki aylık erişilebilirlik ve bakım
-
-Bu ders yayını ücretli SLA içermez; iki ay kesintisiz erişilebilirlik **garanti edilemez**. Güncel Netlify Free hesabı ayda 300 kredi verir; production deploy başına 15, bant genişliği için GB başına 20 ve 10.000 web isteği başına 2 kredi tüketilir. Kredi biterse hesaptaki siteler bir sonraki fatura dönemine kadar duraklar. Bu nedenle gereksiz production deploy yapılmamalı ve Netlify **Usage & billing** ekranı haftalık kontrol edilmelidir. Kaynak: [Netlify kredi rehberi](https://docs.netlify.com/manage/accounts-and-billing/billing/billing-for-credit-based-plans/how-credits-work/).
-
-Supabase Free; proje başına 500 MB veritabanı, organizasyon için 50.000 MAU, 5 GB normal + 5 GB cached egress ve 500.000 Edge Function çağrısı kotası sunar. Düşük etkinlik gösteren ücretsiz projeler yaklaşık yedi günlük pencerede otomatik duraklatılabilir; duraklatılan proje veri ve ayarlarını korur ve Dashboard'dan bir yıl içinde geri alınabilir. İki aylık dönem boyunca her 5–6 günde bir gerçek bakım amacıyla Supabase Dashboard'da proje durumu ve kota ekranı kontrol edilmeli, uyarı e-postaları izlenmeli; otomatik keep-alive veya yapay trafik üretilmemelidir. Free planda otomatik indirilebilir günlük yedek güvencesi olmadığından düzenli şifreli mantıksal dump ayrı konumda saklanmalıdır. Kaynaklar: [Supabase Free kotaları](https://supabase.com/docs/guides/platform/billing-on-supabase), [proje duraklatma](https://supabase.com/docs/guides/platform/free-project-pausing), [yedekleme](https://supabase.com/docs/guides/platform/backups).
-
-## Dosya ve veri akışı
-
-```text
-src/pages + src/components
-           │
-           ▼
-    FeedbackContext
-           ├── demoFeedbackService ──> modül belleğindeki kurgusal kayıtlar
-           │
-           └── supabaseFeedbackService
-                    ├── müşteri ──> submit-feedback Edge Function
-                    └── yönetici ──> Supabase Auth + korumalı RPC'ler
-```
-
-Ana klasörler:
-
-```text
-docs/                  Proje planı ve AI kullanım kaydı
-public/                Statik dosyalar ve Netlify SPA yönlendirmesi
-src/components/        Ortak arayüz bileşenleri
-src/context/           Sayfalarla servis arasındaki ortak durum
-src/data/              Kurgusal başlangıç kayıtları
-src/pages/             Müşteri, giriş ve yönetici sayfaları
-src/services/          Değiştirilebilir veri servisi katmanı
-src/utils/             Doğrulama ve yardımcı fonksiyonlar
-supabase/migrations/   Şema, RLS, grant ve sınırlı RPC migration'ları
-supabase/functions/    Müşteri gönderimi Edge Function'ı
-supabase/tests/        pgTAP veritabanı güvenlik testleri
-```
-
-Detaylı mimari, izin matrisi, veri modeli ve dört aşamalı yol haritası [docs/PROJE_PLANI.md](./docs/PROJE_PLANI.md) içindedir.
-Gerçek proje kurulumu ve doğrulama sırası [docs/SUPABASE_KURULUM.md](./docs/SUPABASE_KURULUM.md) içindedir.
-
-## Test ve kalite kontrolleri
-
-9 Kasım 2026 tarihli son doğrulamada:
-
-- `npm run test`: **42/42 test geçti**. Demo servis, form doğrulama, Supabase servis sözleşmesi, Auth CAPTCHA token aktarımı/eksik-token ve sağlayıcı hata eşleme kontrolleri, global logout, parola kurtarma URL durumları, geçmiş aktör etiketi ve Edge Function yardımcıları kapsandı.
-- `npm run lint`: **uyarı ve hata olmadan geçti**.
-- `npm run build`: **Vite production build geçti**.
-- `npm run build:live`: Yerel browser-safe proje URL/publishable/site key ile **derleme geçti**; build içinde server secret/service-role değeri bulunmadı.
-- 390 × 844 px ve 1440 × 900 px tarayıcı kontrolleri yapıldı.
-- Müşteri gönderiminin aynı SPA oturumunda yönetici listesine gelmesi doğrulandı.
-- Arama + tür + kategori + durum filtrelerinin birlikte çalışması doğrulandı.
-- Durum/not güncellemesinin liste, detay, geçmiş ve özet sayılarına yansıması doğrulandı.
-- Aynı durumla ikinci not kaydının yeni geçmiş satırı üretmediği doğrulandı.
-- Silme modalında “Vazgeç” sonrası kaydın korunduğu tarayıcıda; onaylı silmenin kayıtla gömülü geçmişi kaldırdığı servis testinde doğrulandı.
-- Gerçek tam sayfa yenilemede demo belleğinin başlangıç verisine dönmesi tasarlanan davranıştır; kalıcılık iddiası yoktur.
-- `supabase/tests/database/feedback_security_test.sql` içinde aktif Auth session kontrolü dahil 32 pgTAP kontrolü hazırlandı.
-- Uzak PostgreSQL üzerinde transaction içindeki **32/32 pgTAP** kontrolü geçti ve test kayıtları rollback ile temiz kaldı.
-- Düzeltilen Turnstile secret ile gerçek form tek kurgusal kayıt oluşturdu; çift kayıt oluşmadı. Parola kurtarma, allowlist yönetici girişi, durum/iç not güncellemesi, liste-detay-özet-geçmiş tutarlılığı ve gerçek yenileme kalıcılığı doğrulandı. Yalnız test kaydı geçmişiyle silindi.
-
-Kontrolleri yeniden çalıştırmak için:
+## Komutlar
 
 ```bash
-npm run test
-npm run lint
-npm run build
+npm run test       # 42 birim/servis testi
+npm run test:watch # Vitest izleme modu
+npm run lint       # ESLint, sıfır uyarı hedefi
+npm run build      # Demo production build
+npm run build:live # Supabase production build; public env değerleri gerekir
+npm run preview    # dist önizlemesi
+npm run test:db    # Çalışan yerel Supabase stack üzerinde pgTAP
 ```
 
-Gerçek ekran okuyucu denemesi ve bütün akışın yalnız klavyeyle baştan sona manuel tekrarı henüz ayrıca yapılmamıştır.
+Netlify yapılandırması `npm run build:live` komutunu ve `dist` yayın klasörünü kullanır. `public/_redirects` SPA fallback'i; `public/_headers` CSP, HSTS, `nosniff`, frame, referrer ve Permissions-Policy başlıklarını sağlar.
 
-## Bağımlılık güvenliği
+## Doğrulama kanıtları
 
-7 Kasım 2026 son kontrolünde tam `npm audit`, toplam 204 paket için üretim ve geliştirme zincirinde **0 güvenlik bildirimi** verdi. `npm audit fix --force` kullanılmadı. Semver uyumlu bakım güncellemeleriyle Tailwind paketleri 4.3.5'e ve `@vitejs/plugin-react` 6.2.1'e alındı. ESLint 10 ve `@eslint/js` 10 major yükseltmeleri güvenlik düzeltmesi gerektirmediği ve kırıcı değişiklik riski taşıdığı için otomatik uygulanmadı.
+Bu bölüm geçmişte gerçekten çalıştırılmış kontrolleri, bu dokümantasyon turunda yapılan görsel kontrolle karıştırmaz.
 
-## Ekran görüntüsü
+### Yerel birim, servis ve build kontrolleri
 
-Fincan Arası müşteri ekranı gerçek yerel uygulamadan 390 ve 1440 px görünüm genişliklerinde kaydedildi:
+Depodaki son kayıtlı tam koşu 9 Kasım 2026'dadır; bu belge/görsel güncellemesinde kaynak kod değişmediği için tekrar çalıştırılmadı.
 
-- [390 px müşteri görünümü](./docs/screenshots/fincan-arasi-musteri-390.png)
-- [1440 px müşteri görünümü](./docs/screenshots/fincan-arasi-musteri-1440.png)
+- Vitest: **42/42** geçti. Bunlar altı dosyadaki demo CRUD/geçmiş, istemci doğrulama, Edge payload ve akış-gövde sınırı, Supabase servis/Auth CAPTCHA/recovery/logout sözleşmeleri, recovery URL çözümleme ve geçmiş aktör etiketi testleridir.
+- ESLint: sıfır uyarı ve hata.
+- `build:live`: başarılı; build taramasında server secret/service-role değeri bulunmadı.
+- Son `npm audit`: 204 pakette **0 bildirim**; `npm audit fix --force` kullanılmadı.
 
-![Fincan Arası masaüstü müşteri ekranı](./docs/screenshots/fincan-arasi-musteri-1440.png)
+Bu testlerin senaryoları ve önemli bir bölümü Codex desteğiyle yazıldı. “Test dosyası var” ifadesi, testin geçtiği anlamına gelmez; yukarıdaki toplam yalnız komutu gerçekten çalıştırılıp sonucu kaydedilen testleri gösterir.
 
-Yönetici paneli de aynı iki genişlikte canlı tarayıcıda görsel olarak kontrol edildi; oturum içeren yönetici görünümü teslim görsellerine eklenmedi.
+### Uzak veritabanı ve servis kontrolleri
 
-## Aşama 2 güvenlik durumu
+- Supabase PostgreSQL üzerinde transaction içinde **32/32 pgTAP** geçti; test UUID'leri rollback/temizlik sorgularıyla kalıcı veri bırakmadı.
+- Bu 32 kontrol; RLS/grant matrisi, anonim ve sıradan authenticated redleri, allowlist + aktif session, liste/detay/özet/güncelleme/silme RPC'leri, müşteri metninin değişmezliği, aynı durumda gereksiz geçmiş oluşmaması, aktör bütünlüğü ve cascade silmeyi kapsar.
+- Ayrıca gerçek HTTP yetki matrisi, küçük rate-limit, sahte IP başlığı, idempotency ve gerçek Turnstile başarı/replay/315 saniye süre-aşımı kontrolleri tamamlandı.
+- Global logout sonrasında aynı eski access token yönetici RPC'sinde `403`; refresh denemesi `400` aldı.
 
-Yerel kaynak kodunda şunlar hazırdır:
+### Canlı tarayıcı kontrolleri
 
-- Sürüm kontrollü PostgreSQL şeması, kısıtlar, indeksler, sunucu zamanları ve `ON DELETE CASCADE` geçmiş ilişkisi
-- Data API'den açık olmayan `private.admin_allowlist`; kullanıcı tarafından değiştirilemeyen güvenilir kurulum adımı
-- `anon`/`authenticated` doğrudan tablo grant'lerinin kaldırılması ve savunma katmanı RLS politikaları
-- Her çağrıda `auth.uid()` + allowlist kontrolü yapan, boş `search_path` kullanan sınırlı yönetici RPC'leri
-- Yalnız `status`/`admin_note` güncellemesi, transaction içi durum geçmişi ve `updated_at` çakışma kontrolü
-- Public müşteri Edge Function'ında yöntem/içerik/gövde/enum/uzunluk kontrolü, Turnstile Siteverify, HMAC IP özetiyle kalıcı rate limit ve veritabanı tekilliğiyle idempotency
-- Başarılı müşteri yanıtında kayıt veya yönetici verisi döndürmeme; hata yanıtında SQL/secret ayrıntısı açmama
-- Auth olgunlaşmadan veri yüklemeyen route guard ve çıkış/oturum sonlanmasında hassas React state temizliği
+Canlı Netlify origin'inde HTTPS ve güvenlik başlıkları, SPA doğrudan route/yenileme, gerçek Turnstile gönderimi, yönetici CRUD/yenileme kalıcılığı, arama + filtre ve recovery yönlendirmesi doğrulandı. Bu son dokümantasyon turunda canlı müşteri/yönetici masaüstü ve mobil içerik görünümleri, başarı, detay/geçmiş, filtre, silme onayı ve 404 ekranları yeniden görüntülendi. Silme penceresi `[ÖRNEK]` kaydında iptal edildi. Başarı ekranı için oluşturulan tek `[GEÇİCİ TEST]` kayıt, kullanıcı onayından sonra geçmişiyle silindi; toplam yeniden **3** ve üç `[ÖRNEK]` kayıt korundu.
 
-Gerçek anonim/allowlist dışı/yönetici matrisi, küçük HTTP rate-limit, eşzamanlı idempotency ve son Edge sürümünde gerçek Turnstile başarı/replay/315 saniye expiry tamamlandı. Yönetici RPC'leri aktif Auth session satırını da zorunlu tutuyor; gerçek global logout sonrası eski access token 403 aldı. Auth CAPTCHA için eksik/geçersiz token reddi, insan doğrulamalı yönetici girişi ve varsayılan SMTP ile recovery teslimi doğrulandı. Geçerli token altında kayıtlı ve kurgusal kayıt-dışı recovery ilk istekleri aynı başarılı HTTP/nötr UI sonucunu verdi; tekrarlı rate-limit zamanlaması açık risktir. Production hostname/origin, HTTPS, güvenlik başlıkları, canlı insan Turnstile gönderimi, yönetici CRUD/yenileme ve tam recovery redirect yolu doğrulandı. Kalanlar canlı 390 px görsel kontrolü, recovery zamanlama riski ve yedek/izleme prosedürüdür. Ayrıntılı kanıt ve kalan riskler [docs/GUVENLIK_KONTROL.md](./docs/GUVENLIK_KONTROL.md) dosyasındadır. Frontend route koruması sunucu yetkilendirmesinin yerine geçmez; proje “tamamen güvenli” olarak sınıflandırılmaz.
+## Gerçek ekran görüntüleri
 
-## Yapay zekâ kullanımı
+Tüm görseller çalışan uygulamadan alınmıştır; e-posta, şifre, token, recovery URL'si veya kişisel veri içermez. `canli` adlı dosyalar production Netlify ortamındandır. Tarayıcı içerik genişliği masaüstünde yaklaşık 1424 px, mobilde 375 px olarak kaydedildi; daha önce alınmış 390 px yerel müşteri görseli de `docs/screenshots/` içinde korunur.
 
-Proje fikri, kullanıcı akışları, veri modeli, güvenlik mimarisi, tasarım sistemi, örnek veriler, kod ve test taslakları yapay zekâ destekli geliştirme ortamıyla birlikte hazırlanmıştır. Uygulamanın çalışma zamanında AI API'si veya otomatik karar veren bir model yoktur. Ne üretildiği, hangi kararların insan doğrulaması gerektirdiği ve sınırlar [docs/AI_KULLANIMI.md](./docs/AI_KULLANIMI.md) dosyasında açıklanır.
+<details open>
+<summary><strong>Müşteri formu — masaüstü ve mobil</strong></summary>
 
-## Teslim durumu
+![Fincan Arası canlı müşteri formu masaüstü görünümü](./docs/screenshots/musteri-formu-masaustu-canli.jpg)
 
-Aşama 2'nin kodu, dört uzak migration'ı, sertleştirilmiş Edge Function'ı, parola kurtarma akışı, gerçek yetki/CRUD/rate-limit/idempotency/Turnstile/logout kontrolleri ve güvenlik belgesi hazırdır. GitHub `main` commit `2bd95c3` Netlify production'da yayımlandı. Canlı doğrulama için oluşturulan tek kayıt yönetici panelinde güncellendi, yenilemede kalıcı kaldı ve geçmişiyle silindi; yalnız üç `[ÖRNEK]` sunum kaydı veritabanında bırakıldı. Yönetici bilgileri repoda yer almaz.
+![Fincan Arası canlı müşteri formu mobil görünümü](./docs/screenshots/musteri-formu-mobil-canli.jpg)
+
+</details>
+
+<details>
+<summary><strong>Canlı gönderim başarı durumu</strong></summary>
+
+![Kurgusal geçici kaydın canlı gönderim başarı ekranı](./docs/screenshots/gonderim-basarisi-canli.jpg)
+
+Görselden sonra geçici kayıt ve ilişkili geçmişi silindi; üç `[ÖRNEK]` kayıt kaldı.
+
+</details>
+
+<details>
+<summary><strong>Yönetici girişi ve parola kurtarma</strong></summary>
+
+![Fincan Arası canlı yönetici giriş ekranı; alanlar boştur](./docs/screenshots/yonetici-giris-canli.jpg)
+
+![Fincan Arası canlı şifremi unuttum formu; e-posta alanı boştur](./docs/screenshots/sifremi-unuttum-canli.jpg)
+
+![Fincan Arası canlı geçersiz veya süresi dolmuş parola bağlantısı durumu](./docs/screenshots/sifre-yenile-gecersiz-canli.jpg)
+
+Nötr “İsteğiniz alındı” sonucu ile geçerli yeni-şifre formu bu turda yeniden çekilmedi. İlki yeni CAPTCHA/recovery isteği ve e-posta kotası, ikincisi geçerli tek kullanımlık recovery oturumu gerektiriyordu; gereksiz e-posta üretilmedi ve erişilemeyen durum çekilmiş sayılmadı. Bu iki akışın önceki canlı işlev doğrulaması güvenlik kaydında bulunur.
+
+</details>
+
+<details>
+<summary><strong>Yönetici paneli — masaüstü ve mobil</strong></summary>
+
+![Üç kurgusal örnek kaydı gösteren canlı yönetici paneli masaüstü görünümü](./docs/screenshots/yonetici-paneli-masaustu-canli.jpg)
+
+![Üç kurgusal örnek kaydı gösteren canlı yönetici paneli mobil görünümü](./docs/screenshots/yonetici-paneli-mobil-canli.jpg)
+
+</details>
+
+<details>
+<summary><strong>Kayıt detayı, durum, iç not ve geçmiş</strong></summary>
+
+![Kurgusal örnek kaydın değiştirilemez müşteri metni, durum, iç not ve geçmiş alanları](./docs/screenshots/kayit-detayi-not-durum-gecmis-canli.jpg)
+
+</details>
+
+<details>
+<summary><strong>Birleşik arama ve filtre sonucu</strong></summary>
+
+![Bitki çayı araması ile Öneri, Menü ve Yeni filtrelerinin tek sonucu](./docs/screenshots/arama-filtre-sonucu-canli.jpg)
+
+</details>
+
+<details>
+<summary><strong>Silme onayı — işlem iptal edildi</strong></summary>
+
+![Kurgusal örnek kayıt için silme onay penceresi](./docs/screenshots/silme-onayi-canli.jpg)
+
+Bu pencerede `Vazgeç` seçildi ve `[ÖRNEK]` kayıt korundu.
+
+</details>
+
+<details>
+<summary><strong>404</strong></summary>
+
+![Fincan Arası canlı 404 sayfası](./docs/screenshots/404-canli.jpg)
+
+</details>
+
+## Yapay zekâ nasıl kullanıldı?
+
+| Aşama | Kullanılan araç | Alınan destek | Nasıl değerlendirildi / doğrulandı |
+| --- | --- | --- | --- |
+| Fikir ve kapsam | ChatGPT | Tek kafe/tek yönetici kapsamı, müşteri-yönetici akışları, kabul ölçütleri ve sonraki Codex istemlerinin hazırlanması | Öğrenci kapsamı daralttı; QR/üyelik gibi gereksiz özellikleri dışarıda bıraktı ve her turda yetki sınırlarını onayladı. |
+| Kod ve mimari | Codex | React route/bileşenleri, demo-servis ayrımı, Supabase migration/RPC/RLS, Edge Function, Auth/recovery ve Netlify yapılandırması | Diff ve çalışan arayüz incelendi; yerel komutlar, uzak pgTAP/HTTP matrisi ve canlı smoke kontrolleriyle doğrulandı. |
+| Hata ayıklama | Codex | 504'e dönüşen stale güncellemenin hızlı `409` çakışmasına çevrilmesi; büyük gövdenin belleğe alınmadan akış sırasında kesilmesi; kullanıcı silinince geçmiş aktör kısıtının korunması; logout sonrası aktif-session kontrolü | Gerçek stale RPC `409/FEEDBACK_CONFLICT`, content-length olmadan 12 KiB istek `413`, 32 pgTAP ve logout sonrası eski token `403` kanıtlarıyla kontrol edildi. |
+| Test | Codex | Birim/servis ve pgTAP senaryolarının hazırlanması, test komutlarının çalıştırılması ve sonuçların ayrıştırılması | AI tarafından yazılan test ile çalıştırılmış test ayrıldı: son kayıtta Vitest **42/42**, uzak pgTAP **32/32**; toplamlar birleştirilmedi. |
+| Görsel kimlik | Yerleşik görsel üretim aracı | Kullanıcının referansından esinlenen, yazısız logo işareti ve kafe illüstrasyonu | Kullanıcı Fincan Arası yönünü seçti; varlıklar ayrı, yerel ve optimize edildi. Marka/metin HTML olarak kaldı; mobil ve masaüstü arayüzde kontrol edildi. |
+| Yayın | Codex + GitHub + Netlify | Secret taraması, public repo/ilk push, `main` dalı bağlantısı, Free plan build ve canlı origin ayarları | GitHub cihaz girişini ve panel/CAPTCHA adımlarını kullanıcı yaptı; canlı commit, HTTPS, header, SPA ve gerçek CRUD ayrı ayrı doğrulandı. |
+| Belgeleme | ChatGPT / Codex | README, AI kullanım kaydı, güvenlik kanıtı ve gerçek ekran envanteri | İddialar komut/uzak test/canlı UI kanıtlarıyla eşleştirildi; erişilemeyen ekranlar eksik bırakıldı. |
+
+Gerçek geçmiş istemlerden kısa örnekler:
+
+- “Mevcut Söz Sende projesine devam et. Projeyi yeniden kurma...”
+- “[Özetlenmiş istem] Doğru Supabase projesine bağlan; migration, allowlist, Auth, Edge Function ve pgTAP kontrollerini gerçek ortamda tamamla.”
+- “Legacy API keys kapatıldı” ve “Turnstile secret düzeltildi” kullanıcı tarafından yapılan panel adımlarının geri bildirimleridir.
+- “[Özetlenmiş istem] Fincan Arası referansını kullan; marka metnini HTML bırak, logo ve illüstrasyonu ayrı optimize varlıklar yap.”
+- “Hostname kaydedildi, canlı kontrollere devam et.”
+
+İnsan katkısı ayrı tutulur: proje kapsamı, marka adı ve görsel seçimi, ücretsiz/public yayın kararı, Supabase/GitHub/Netlify hesap adımları, gizli değerlerin panellere girilmesi, yönetici şifresi, CAPTCHA'lar ve veri silme onayları kullanıcıya aittir. Kodun tamamının elle yazıldığı veya her kontrolün kullanıcı tarafından manuel yapıldığı iddia edilmez.
+
+Uygulamanın çalışma zamanında AI API'si, sohbet botu, makine öğrenmesi veya derin öğrenme yoktur. Yapay zekâ yalnız geliştirme ve belgeleme aracıdır. Ayrıntılı kayıt: [docs/AI_KULLANIMI.md](./docs/AI_KULLANIMI.md).
+
+## Güvenlik ve ücretsiz hizmet sınırları
+
+- Proje “tamamen güvenli” olarak sınıflandırılmaz. Ayrıntılı durum ve kalan riskler [docs/GUVENLIK_KONTROL.md](./docs/GUVENLIK_KONTROL.md) içindedir.
+- Varsayılan Supabase e-posta servisi ders demosu içindir; organizasyon üyeleri, düşük kota ve best-effort teslim sınırları vardır. Özel SMTP/doğrulanmış gönderici alan adı kurulmamıştır.
+- Geçerli CAPTCHA altında kayıtlı ve kurgusal kayıt-dışı ilk recovery istekleri aynı nötr sonucu verdi; tekrarlı 60 saniyelik kota/rate-limit zamanlama yan kanalı çalıştırılmadı.
+- Logout sonrası uygulama yetkisi aktif-session kontrolüyle kesildi; gerçek bir JWT'nin doğal `exp` süresini bekleyerek gateway reddi ayrıca kanıtlanmadı.
+- Netlify Free ve Supabase Free SLA vermez. Netlify kredisi biterse site dönem sonuna kadar durabilir; Supabase düşük etkinlikte yaklaşık yedi günlük pencerede projeyi duraklatabilir. Yapay trafik kurulmaz; kota/pause e-postası ve Dashboard düzenli kontrol edilir.
+- Ücretsiz planda iki ay kesintisiz erişilebilirlik garanti edilemez. Yedek, hata izleme ve manuel resume işletim sorumluluğudur; ücretli hizmet açılmamıştır.
+- Gerçek ekran okuyucu denemesi ve tüm akışın yalnız klavyeyle baştan sona manuel tekrarı ayrıca beklemektedir.
+
+Kurulum ve uzak doğrulama ayrıntıları [docs/SUPABASE_KURULUM.md](./docs/SUPABASE_KURULUM.md), plan ve işletim maddeleri [docs/PROJE_PLANI.md](./docs/PROJE_PLANI.md) içindedir.
