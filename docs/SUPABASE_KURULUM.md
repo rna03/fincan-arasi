@@ -204,17 +204,17 @@ npm run build
 
 Rate-limit satırları pencere sonunda; idempotency makbuzları 24 saat sonunda geçersiz olur. Her yeni hız sınırı kontrolü, süresi geçmiş satırlardan sınırlı bir grubu fırsatçı olarak temizler. Trafiğin uzun süre olmadığı ortamlarda, Supabase Cron kullanılabiliyorsa aynı tablolarda `expires_at < now()` koşuluyla günlük bakım görevi planlanabilir. Bu kayıtlar ham IP veya form metni içermez; IP yalnız sunucu secret'ıyla HMAC özeti olarak tutulur.
 
-## Bu çalışma ortamındaki durum — 8 Kasım 2026
+## Bu çalışma ortamındaki durum — 9 Kasım 2026
 
 - Yalnız `soz-sende` projesi (`ckanefuhclkcvlzfmiax`) bağlandı ve hedef her uzak komutta açıkça doğrulandı.
 - Dört migration uzak projeye uygulandı; son migration yönetici yetkisini allowlist yanında güncel Auth session satırına bağladı ve yerel/uzak migration geçmişleri eşleşiyor.
-- Auth sign-up kapatıldı. Site URL `http://127.0.0.1:5175`, izinli yerel yönlendirmeler 5175 portuyla sınırlandı; uzaktaki e-posta/MFA ayarları değiştirilmedi.
+- Auth sign-up kapalıdır. Production Site URL `https://fincan-arasi.netlify.app`, redirect listesi yalnız `https://fincan-arasi.netlify.app/yonetici/sifre-yenile`; config push sırasında uzaktaki CAPTCHA/e-posta/MFA ayarları değiştirilmedi.
 - `submit-feedback` Edge Function sürüm 1 olarak dağıtıldı ve `ACTIVE` durumu doğrulandı.
 - Aktif-session maddesi dahil 32/32 pgTAP kontrolü uzak PostgreSQL üzerinde transaction içinde geçti. Kurgusal feedback, history, session ve Auth test UUID'lerinin işlem sonrasında `0` kayıt bıraktığı doğrulandı.
 - Canlı şema lint'i hata vermedi. Danışmanlarda private tablolardaki politikasız RLS ve allowlist kontrolü yapan yönetici `SECURITY DEFINER` RPC'leri bilinçli tasarım uyarılarıdır. Üç eksik foreign-key indeksi ikinci migration ile eklendi; boş projedeki kullanılmamış indeks bilgileri beklenen başlangıç durumudur.
 - Tek gerçek Auth kullanıcısı oluşturuldu ve UUID değeri çıktılanmadan `private.admin_allowlist` içine eklendi; kullanıcı ve allowlist sayıları `1/1` olarak doğrulandı.
 - Legacy `anon`/`service_role` API anahtarları kullanıcı tarafından devre dışı bırakıldı ve legacy JWT secret revoke edildi. JWKS ucu aktif imzayı ES256 olarak gösteriyor. Edge Function yalnız `SUPABASE_SECRET_KEYS` içindeki yeni secret anahtarı kullanır; legacy service-role fallback'i kaldırıldı.
-- Frontend `.env.local`, gerçek proje URL'si, publishable anahtar ve Cloudflare site key ile Supabase moduna geçirildi. Tek geliştirme sunucusu `http://127.0.0.1:5175/` adresinde çalışıyor; Vite/HMR portu 5175'e sabitlendi.
+- Frontend `.env.local`, gerçek proje URL'si, publishable anahtar ve Cloudflare site key ile Supabase modundadır. Netlify production build ortamına yalnız bu üç public değer ile `VITE_DATA_MODE=supabase` ve `VITE_ENABLE_DEMO_TOOLS=false` aktarıldı; server secret'ları Supabase Edge ortamında kaldı.
 - Düzeltilen Turnstile secret ile gerçek müşteri gönderimi başarılı oldu. `Kurgusal canlı test kaydı` başlıklı tam bir kayıt bulunduğu ve yanlışlıkla ikinci kayıt oluşmadığı doğrulandı.
 - Yönetici girişi için `/yonetici/sifremi-unuttum` ve `/yonetici/sifre-yenile` akışları eklendi. Remote Auth redirect listesi yalnız iki yerel, tam parola-yenileme yoluna daraltıldı; `config diff` sonrasında bu alanda fark kalmadı. Geçersiz/süresi dolmuş bağlantı görünümü, auth URL parçalarının temizlenmesi, gerçek sıfırlama e-postası, yeni şifre ve allowlist yönetici girişi doğrulandı.
 - Tek kurgusal kayıt yönetici panelinde okundu; durumu `reviewing` ve iç notu güncellendi. Liste, detay ve özet aynı durumu gösterdi; geçmişte ilk `new` kaydına ek olarak `new → reviewing` satırı oluştu. Gerçek sayfa yenilemesinden sonra oturum, durum, not ve geçmiş kalıcı kaldı.
@@ -222,4 +222,5 @@ Rate-limit satırları pencere sonunda; idempotency makbuzları 24 saat sonunda 
 - Güvenlik denetiminde gerçek allowlist-dışı Auth kullanıcısı, küçük HTTP rate-limit, sahte IP başlığı ve eşzamanlı idempotency denemeleri geçti. Çakışma kodu gerçek 409'a çevrildi; Auth kullanıcısı silinince audit geçmişinin korunması düzeltildi. Son Edge sürümünde gerçek Turnstile başarı, replay ve 315 saniye expiry geçti; yalnız production hostname/origin smoke testi yayına kaldı.
 - Auth CAPTCHA doğru projede Cloudflare Turnstile ile etkinleştirildi. Giriş ve recovery için eksik/geçersiz tokenların tamamı gerçek endpoint'te reddedildi; insan doğrulamalı yönetici girişi ve varsayılan SMTP ile tek recovery e-posta teslimi geçti. Kayıtlı ve kurgusal kayıt-dışı geçerli recovery ilk istekleri aynı başarılı HTTP/nötr UI sonucunu verdi; tekrarlı kota/rate-limit zamanlaması işletim riski olarak açık tutuldu.
 - Sunum için üç `[ÖRNEK]` geri bildirim normal müşteri formu üzerinden oluşturuldu ve panelde Menü/Hizmet/Atmosfer kategorilerinde 1'er kayıt olarak doğrulandı. Bunlar kullanıcı onayıyla kalıcı bırakıldı; test temizliğinin parçası değildir.
+- Netlify `fincan-arasi` sitesi GitHub `rna03/fincan-arasi` deposunun `main` dalına bağlandı. Edge `ALLOWED_ORIGINS` yalnız `https://fincan-arasi.netlify.app`, `TURNSTILE_ALLOWED_HOSTNAMES` yalnız `fincan-arasi.netlify.app`; kalan secret adları değerleri gösterilmeden doğrulandı.
 - Docker Desktop eski kilitli bir geçici soket nedeniyle motoru başlatamadı. Fabrika sıfırlaması veya veri silme yapılmadı; pgTAP doğrulaması Docker gerektirmeyen uzak SQL yolu ile tamamlandı.

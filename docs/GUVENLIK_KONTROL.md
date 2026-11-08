@@ -96,9 +96,9 @@ Durumların anlamı:
 
 | Kontrol | Durum | Kısa kanıt | Kalan risk |
 |---|---|---|---|
-| CORS/origin | doğrulandı | Yerel izinli origin gerçek POST'ta çalıştı; originsiz ve farklı origin 403. CORS hiçbir yerde yönetici yetkisi yerine kullanılmıyor. | Üretim origin'i belli olunca tam HTTPS origin allowlist'e eklenmeli ve yerel originler canlıdan çıkarılmalı. |
-| Auth redirect adresleri | doğrulandı | Mevcut uzak config yerel tam `/yonetici/sifre-yenile` yollarıyla eşleşiyor; kötü niyetli redirect gerçek linkte kabul edilmedi. | Üretim URL'si henüz yok; yayın öncesi yalnız tam HTTPS recovery yolu eklenmeli. |
-| Turnstile hostname | yayın sonrası bekliyor | Kod exact hostname allowlist'i zorluyor; yerel hostname yapılandırmasıyla invalid-token yolu çalıştı. | Canlı hostname oluşmadan Dashboard widget ve Edge hostname allowlist'i doğrulanamaz. |
+| CORS/origin | yayın sonrası bekliyor | Yerel negatif/pozitif matris daha önce geçti; uzak Edge `ALLOWED_ORIGINS` artık yalnız `https://fincan-arasi.netlify.app`. CORS yönetici yetkisi yerine kullanılmıyor. | Kesin live origin'den OPTIONS/POST smoke testi henüz tamamlanmadı. |
+| Auth redirect adresleri | eksik ve düzeltildi | Uzak Auth Site URL production origin'ine, redirect listesi yalnız tam HTTPS `/yonetici/sifre-yenile` yoluna daraltıldı; config push diğer Auth ayarlarını değiştirmedi. | Gerçek yeni recovery e-postasının production yoluna dönüşü kota gözetilerek doğrulanmalı. |
+| Turnstile hostname | yayın sonrası bekliyor | Edge `TURNSTILE_ALLOWED_HOSTNAMES` yalnız `fincan-arasi.netlify.app` olarak güncellendi; kod exact eşleşme zorluyor. | Cloudflare widget hostname kaydı ve canlı insan tokenıyla gönderim doğrulanmalı. |
 | HTTPS | yayın sonrası bekliyor | Supabase API/Edge çağrıları HTTPS; `_headers` içinde `upgrade-insecure-requests` ve HSTS var. | Frontend yayınlanmadığı için gerçek sertifika/HSTS ve HTTP→HTTPS yönlendirmesi doğrulanmadı. |
 | CSP ve güvenlik başlıkları | eksik ve düzeltildi | `public/_headers` içine CSP, no-referrer, nosniff, DENY frame, Permissions-Policy ve HSTS eklendi. Tek inline style native `<progress>` ile kaldırıldı; CSP `style-src 'self'`, Turnstile script/frame originleriyle uyumlu. Live build `_headers` dosyasını içeriyor. | Hosting `_headers` formatını uygulamalı; gerçek response header ve Turnstile widget yüklemesi yayın sonrası tarayıcıda doğrulanmalı. |
 | Demo/test araçları canlı build | doğrulandı | `showDemoTools` ancak hem `VITE_DATA_MODE=demo` hem açık `VITE_ENABLE_DEMO_TOOLS=true` olduğunda çalışıyor. Live build Supabase modunda alındı. | Yanlış deploy komutu demo build yayınlarsa gerçek backend kullanılmaz; CI komutu sabitlenmeli. |
@@ -106,6 +106,7 @@ Durumların anlamı:
 | İş verisi saklama politikası | yayın sonrası bekliyor | Teknik kayıt süreleri tanımlı; feedback için yalnız yönetici manuel silmesi var, otomatik iş-verisi süresi yok. | İşletme sahibi amaç/süre/silme talebi politikasını ve yasal gereksinimleri yayın öncesi belirlemeli. |
 | Hata izleme | yayın sonrası bekliyor | Edge güvenli sabit kod + request ID logluyor; ücretli servis açılmadı. | Alarm, sahip, inceleme sıklığı ve planın log saklama sınırı canlı kullanım öncesi belirlenmeli. |
 | Yedekleme/kurtarma | yayın sonrası bekliyor | Veri kaybettiren işlem yapılmadı. Supabase ücretsiz plan için CLI ile düzenli off-site mantıksal dump öneriyor; ücretli PITR açılmadı. | Ücretsiz planda otomatik geri yüklenebilir günlük yedek güvencesi yok; şifreli yedek konumu, sıklık ve restore tatbikatı belirlenmeli. |
+| İki aylık ücretsiz erişilebilirlik | gerekçesiyle uygulanamaz | Netlify Free aylık 300 kredi; Supabase Free düşük etkinlikte yaklaşık yedi günlük pencerede duraklatılabilir ve iki hizmet de ücretsiz SLA sunmaz. Haftalık kota kontrolü, 5–6 günde bir gerçek Dashboard bakım incelemesi, pause e-postası takibi ve manuel resume adımları planlandı; yapay trafik kurulmayacak. | Ücretsiz planlarla iki ay kesintisiz çalışma garanti edilemez; kredi aşımı veya otomatik pause geçici kesinti yaratabilir. |
 
 ## Çalıştırılan kontroller ve temizlik özeti
 

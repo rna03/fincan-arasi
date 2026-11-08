@@ -4,7 +4,7 @@ Fincan Arası, tek bir kafe için tasarlanan geri bildirim web uygulamasıdır. 
 
 Bu depo **Aşama 2 uygulamasını** içerir. Aşama 1'in bellek içi demo modu korunmuştur; bunun yanında bağlı Supabase projesinde PostgreSQL migration'ları, Auth tabanlı tek yönetici girişi, parola kurtarma, korumalı RPC'ler ve doğrulanan müşteri Edge Function'ı kurulmuştur. Gerçek yönetici CRUD, yenileme kalıcılığı ve test kaydı temizliği doğrulanmıştır.
 
-GitHub deposu ve canlı site bağlantısı henüz oluşturulmamıştır; bu README olmayan bir teslim URL'si içermez.
+Kaynak kodu [GitHub'daki `rna03/fincan-arasi` deposunda](https://github.com/rna03/fincan-arasi) tutulur. Canlı uygulama adresi: [https://fincan-arasi.netlify.app](https://fincan-arasi.netlify.app).
 
 ## Özellikler
 
@@ -121,6 +121,8 @@ Kök dizindeki `netlify.toml` teslim ayarlarını sabitler:
 | Yayın klasörü | `dist` |
 | Node hattı | `22` |
 
+Netlify projesi GitHub `main` dalına sürekli yayın için bağlanmıştır. Production origin'i `https://fincan-arasi.netlify.app`; Supabase Auth Site URL, tam recovery redirect yolu ve Edge origin/hostname allowlist'i bu adresle sınırlandırılmıştır.
+
 `public/_redirects`, React Router yollarını doğrudan açma ve yenileme için `index.html` SPA fallback'ini sağlar. `public/_headers` CSP, HSTS, `nosniff`, frame, referrer ve Permissions-Policy başlıklarını içerir. Vite build sırasında iki dosya da `dist/` içine kopyalanır.
 
 Netlify build ortamında yalnız şu browser-safe frontend değişkenleri tanımlanmalıdır:
@@ -136,6 +138,12 @@ Netlify build ortamında yalnız şu browser-safe frontend değişkenleri tanım
 Bu ders demosunda özel SMTP sağlayıcısı kurulmamıştır. Supabase'in varsayılan e-posta servisi yalnız proje organizasyonunun ekip üyesi olan önceden yetkilendirilmiş adreslere gönderim yapar; mevcut sınır proje başına saatte **2 e-posta**dır ve sağlayıcı tarafından değiştirilebilir. Hizmet best-effort çalışır, teslim/çalışabilirlik SLA'sı sunmaz ve üretim kullanımı için tasarlanmamıştır. Gerçek yönetici adresi organizasyona eklenerek tek parola-kurtarma e-postası başarıyla teslim edilmiştir.
 
 Geçerli CAPTCHA altında kayıtlı ve kurgusal kayıt-dışı ilk recovery istekleri aynı başarılı HTTP ve nötr arayüz sonucunu vermiştir. E-posta kotasını tüketmemek için 60 saniyelik kullanıcı penceresindeki tekrarlı yanıt matrisi çalıştırılmadı; bu zamanlama kaynaklı hesap-varlığı riski açık tutulur. Gerçek müşteri yayını öncesinde doğrulanmış gönderici alan adı olan özel SMTP ve yeniden regresyon testi gerekir. Güncel sınırlar için [Supabase Auth SMTP rehberine](https://supabase.com/docs/guides/auth/auth-smtp) bakın.
+
+### Ücretsiz planlarda iki aylık erişilebilirlik ve bakım
+
+Bu ders yayını ücretli SLA içermez; iki ay kesintisiz erişilebilirlik **garanti edilemez**. Güncel Netlify Free hesabı ayda 300 kredi verir; production deploy başına 15, bant genişliği için GB başına 20 ve 10.000 web isteği başına 2 kredi tüketilir. Kredi biterse hesaptaki siteler bir sonraki fatura dönemine kadar duraklar. Bu nedenle gereksiz production deploy yapılmamalı ve Netlify **Usage & billing** ekranı haftalık kontrol edilmelidir. Kaynak: [Netlify kredi rehberi](https://docs.netlify.com/manage/accounts-and-billing/billing/billing-for-credit-based-plans/how-credits-work/).
+
+Supabase Free; proje başına 500 MB veritabanı, organizasyon için 50.000 MAU, 5 GB normal + 5 GB cached egress ve 500.000 Edge Function çağrısı kotası sunar. Düşük etkinlik gösteren ücretsiz projeler yaklaşık yedi günlük pencerede otomatik duraklatılabilir; duraklatılan proje veri ve ayarlarını korur ve Dashboard'dan bir yıl içinde geri alınabilir. İki aylık dönem boyunca her 5–6 günde bir gerçek bakım amacıyla Supabase Dashboard'da proje durumu ve kota ekranı kontrol edilmeli, uyarı e-postaları izlenmeli; otomatik keep-alive veya yapay trafik üretilmemelidir. Free planda otomatik indirilebilir günlük yedek güvencesi olmadığından düzenli şifreli mantıksal dump ayrı konumda saklanmalıdır. Kaynaklar: [Supabase Free kotaları](https://supabase.com/docs/guides/platform/billing-on-supabase), [proje duraklatma](https://supabase.com/docs/guides/platform/free-project-pausing), [yedekleme](https://supabase.com/docs/guides/platform/backups).
 
 ## Dosya ve veri akışı
 
@@ -235,4 +243,4 @@ Proje fikri, kullanıcı akışları, veri modeli, güvenlik mimarisi, tasarım 
 
 ## Teslim durumu
 
-Aşama 2'nin kodu, dört uzak migration'ı, sertleştirilmiş Edge Function'ı, parola kurtarma akışı, gerçek yetki/CRUD/rate-limit/idempotency/Turnstile/logout kontrolleri ve güvenlik belgesi hazırdır. Geçici güvenlik test kullanıcıları ile ilişkili test verileri temizlenmiştir. Kullanıcının onayıyla oluşturulan üç `[ÖRNEK]` sunum kaydı veritabanında kalır; yönetici bilgileri repoda yer almaz. Kaynak GitHub teslimine hazırdır; Netlify yayını yapılmamıştır.
+Aşama 2'nin kodu, dört uzak migration'ı, sertleştirilmiş Edge Function'ı, parola kurtarma akışı, gerçek yetki/CRUD/rate-limit/idempotency/Turnstile/logout kontrolleri ve güvenlik belgesi hazırdır. Geçici güvenlik test kullanıcıları ile ilişkili test verileri temizlenmiştir. Kullanıcının onayıyla oluşturulan üç `[ÖRNEK]` sunum kaydı veritabanında kalır; yönetici bilgileri repoda yer almaz. GitHub deposu ve Netlify CI/CD bağlantısı kurulmuştur; canlı doğrulama sonuçları güvenlik ve proje planı belgelerinde tutulur.

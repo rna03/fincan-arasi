@@ -204,22 +204,22 @@ Tamamlanan denetim sonuçları `docs/GUVENLIK_KONTROL.md` içinde korunur ve bur
 
 - [x] **Doğrudan Auth recovery yanıt ayrımı:** Giriş ve recovery formları ayrı Turnstile action'larıyla tokenı Supabase Auth'a iletiyor; token yoksa istemci çağrı başlatmıyor. Eksik/geçersiz tokenlar gerçek endpoint'te reddedildi. Geçerli tokenlı kayıtlı yönetici isteği e-postayı teslim etti; geçerli tokenlı kurgusal kayıt-dışı istek `200` verdi ve iki yol aynı nötr UI sonucunda kaldı. Tekrarlı 60 saniye rate-limit/kota zamanlaması yan kanal riski olarak işletim maddesinde açık tutuldu.
 - [ ] **Gerçekten süresi dolmuş access token:** Logout edilmiş ama henüz `exp` süresi dolmamış eski token artık uygulama yetkisinde 403 alıyor. Gateway'in gerçek `exp` reddi mevcut bir saatlik tokenı bekleyerek ayrıca kanıtlanmadı; bu madde logout düzeltmesini geçersiz kılmaz, platform-expiry kanıtını açık tutar.
-- [ ] İş verisi için saklama/silme süresi, ücretsiz planda manuel mantıksal yedek sıklığı, restore sorumlusu ve hata izleme sahipliği belirlenmeli.
-- [ ] Production URL, alan adı ve barındırma seçimi kesinleştirilmeli. Bu tasarım seçimi yapılana kadar yeni servis kurulumu veya yayın adımı başlatılmaz.
+- [ ] İş verisi için saklama/silme süresi ve hata izleme sahipliği belirlenmeli. Ücretsiz planda şifreli mantıksal yedek sıklığı ile restore sorumlusu aşağıdaki işletim planına bağlandı; ilk dump/restore tatbikatı henüz yapılmadı.
+- [x] Production URL ve barındırma seçimi kesinleşti: `https://fincan-arasi.netlify.app`, Netlify Free ve GitHub `main` sürekli yayını.
 
 ### GitHub hazırlığı — yayın öncesi depo işleri
 
 - [x] `.env.local`, `dist/`, log, `supabase/.temp`, `.netlify` ve tek-seferlik uzak audit betikleri `.gitignore` ile ilk commit kapsamı dışında; birim testleri ve pgTAP korunuyor.
-- [ ] Git geçmişi henüz boş ve teslim kaynakları untracked; insan gözüyle son dosya listesi kontrolünden sonra ilk commit hazırlanmalı.
-- [ ] GitHub remote/repo henüz yok; public depo oluşturulmadan önce son secret taraması yapılmalı, ardından GitHub secret scanning/Dependabot ayarları gözden geçirilmeli.
-- [ ] Commit ve push bu çalışma kapsamında özellikle yapılmadı.
+- [x] İlk commit öncesi 60 dosyalık liste, ignore kuralları, secret/kişisel veri ve örnek env dosyaları kontrol edildi; `main` çalışma ağacı temizdi.
+- [x] Public `rna03/fincan-arasi` deposu oluşturuldu ve ilk commit push edildi; `.env.local`, `dist`, loglar ve geçici araçlar izlenmiyor.
+- [x] Netlify CI/CD aynı GitHub deposunun `main` dalına deploy key ve webhook ile bağlandı.
 
 ### Canlı yayın sırasında — yalnız gerçek production değerleriyle
 
 - [x] Netlify build komutu `npm run build:live`, yayın klasörü `dist`; SPA fallback ve security header dosyaları kaynakta hazırlandı.
-- [ ] Auth Site URL ve recovery redirect listesi yalnız tam HTTPS production yollarına daraltılmalı; yerel adreslerin canlıda kalıp kalmayacağı bilinçli seçilmeli.
-- [ ] Edge `ALLOWED_ORIGINS` ve Turnstile hostname allowlist'i gerçek production origin/hostname ile güncellenmeli; Cloudflare widget hostname ayarıyla karşılaştırılmalı.
-- [ ] Frontend yalnız `build:live` çıktısıyla yayınlanmalı; demo/test araçlarının kapalı, frontend env'in yalnız URL/publishable/site key içerdiği doğrulanmalı.
+- [x] Auth Site URL `https://fincan-arasi.netlify.app`, recovery redirect listesi yalnız tam `https://fincan-arasi.netlify.app/yonetici/sifre-yenile` yolu olacak şekilde uzak projeye uygulandı; yerel redirect'ler production config'den çıkarıldı.
+- [ ] Edge `ALLOWED_ORIGINS` ve `TURNSTILE_ALLOWED_HOSTNAMES` yalnız kesin production adresiyle güncellendi; Cloudflare widget hostname kaydı ve gerçek token smoke testi kullanıcı panel onayı sonrası doğrulanacak.
+- [ ] Netlify production build ortamında yalnız üç browser-safe Vite değeri ile `VITE_DATA_MODE=supabase` ve `VITE_ENABLE_DEMO_TOOLS=false` kaydedildi; uzak build/deploy sonucu bekleniyor.
 - [ ] Gerçek response üzerinde HTTPS yönlendirmesi, sertifika, HSTS, CSP, `nosniff`, frame ve Permissions-Policy başlıkları; Turnstile widget yüklemesi ve SPA fallback birlikte doğrulanmalı.
 - [ ] Son Edge sürümünün gerçekten hedef projede aktif olduğu ve frontend'in o sürüme çağrı yaptığı production smoke testinde doğrulanmalı. Bu kontrol, yukarıdaki ayrıntılı gerçek Turnstile matrisinin yerine geçmez.
 - [ ] Gerçek production recovery e-postası teslimi, linkin yalnız izinli production adrese dönmesi ve hesap varlığını ayırt etmeyen kullanıcı deneyimi doğrulanmalı.
@@ -234,6 +234,9 @@ Tamamlanan denetim sonuçları `docs/GUVENLIK_KONTROL.md` içinde korunur ve bur
 - [ ] Rate-limit satırlarının 15 dakikalık, idempotency makbuzlarının 24 saatlik penceresi ve fırsatçı temizliği izlenmeli; birikme görülürse mevcut kapsam içinde güvenli bakım planlanmalı.
 - [ ] Mantıksal yedek alınmalı, şifreli ve ayrı konumda saklanmalı; veri kaybetmeyen bir restore tatbikatıyla gerçekten kullanılabildiği doğrulanmalı.
 - [ ] `npm audit`, uyumlu bakım güncellemeleri, Supabase/Cloudflare güvenlik duyuruları ve secret rotasyonu düzenli bakım takvimine bağlanmalı; `--force` ile kontrolsüz yükseltme yapılmamalı.
+- [ ] İki ay boyunca her hafta Netlify **Usage & billing** 300 kredi sınırı ve Supabase kullanım kotaları gözden geçirilmeli; gereksiz production deploy yapılmamalı.
+- [ ] Her 5–6 günde bir gerçek bakım incelemesinde Supabase Dashboard proje durumu ve sahip e-postasındaki pause uyarıları kontrol edilmeli. Otomatik keep-alive/yapay trafik kurulmayacak; pause görülürse Dashboard'dan manuel **Resume project** uygulanacak.
+- [ ] Netlify Free ve Supabase Free SLA sağlamaz. Netlify kredisi biterse dönem sonuna kadar, Supabase düşük etkinlikte duraklarsa manuel resume tamamlanana kadar kesinti olabilir; bu nedenle iki aylık erişilebilirlik ücretsiz planda garanti değildir.
 
 ## 10. Ders teslim kontrol listesi
 
@@ -259,7 +262,7 @@ Tamamlanan denetim sonuçları `docs/GUVENLIK_KONTROL.md` içinde korunur ve bur
 - [x] 390 ve 1440 px gerçek müşteri ekran görüntüleri eklendi; yönetici paneli iki genişlikte görsel olarak kontrol edildi.
 - [x] Gerçek anonim/allowlist dışı/yönetici yetki matrisi ve eşzamanlı rate-limit/idempotency kontrolleri tamamlandı.
 - [x] Son Edge sürümünde gerçek Turnstile tokenıyla yeni insert/replay/expiry/action/hostname kontrolleri tamamlandı.
-- [ ] Public GitHub deposu oluşturuldu ve kaynak yüklendi.
+- [x] Public GitHub deposu oluşturuldu ve kaynak yüklendi.
 - [ ] Netlify canlı yayını ve SPA yönlendirmesi doğrulandı.
 - [ ] GitHub ve canlı bağlantı teslim edildi.
 
