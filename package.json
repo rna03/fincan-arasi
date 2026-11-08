@@ -1,0 +1,39 @@
+{
+  "name": "soz-sende",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "cross-env VITE_DATA_MODE=demo vite",
+    "dev:tools": "cross-env VITE_DATA_MODE=demo VITE_ENABLE_DEMO_TOOLS=true vite",
+    "dev:live": "cross-env VITE_DATA_MODE=supabase vite",
+    "build": "cross-env VITE_DATA_MODE=demo vite build",
+    "build:live": "cross-env VITE_DATA_MODE=supabase vite build",
+    "lint": "eslint . --max-warnings=0",
+    "test": "cross-env VITE_DATA_MODE=demo vitest run",
+    "test:watch": "cross-env VITE_DATA_MODE=demo vitest",
+    "test:db": "supabase test db",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
+    "lucide-react": "^1.70.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router": "^7.18.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@tailwindcss/vite": "^4.3.4",
+    "@vitejs/plugin-react": "^6.1.2",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.14.0",
+    "supabase": "^3.0.0",
+    "tailwindcss": "^4.3.4",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  }
+}

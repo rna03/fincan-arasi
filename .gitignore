@@ -1,0 +1,29 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Local environment files (keep the documented example)
+.env
+.env.*
+!.env.example
+
+# Logs and editor / OS files
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local screenshots and temporary test artifacts
+tmp/
+playwright-report/
+test-results/
+
+# Local deployment and Supabase CLI state
+.netlify/
+supabase/.temp/
+
+# One-off remote security audit harnesses; keep unit/pgTAP tests in the repository
+scripts/security-audit-*.mjs
+scripts/verify-logout-revocation.mjs

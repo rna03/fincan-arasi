@@ -1,0 +1,6 @@
+[build]
+  command = "npm run build:live"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
