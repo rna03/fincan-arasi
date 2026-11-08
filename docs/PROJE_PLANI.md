@@ -173,7 +173,7 @@ Netlify SPA yönlendirmesi ile frontend sunulur. İstemcide yalnızca publishabl
 - Müşteri Edge Function'ı; sunucu doğrulaması, idempotency, merkezi hız sınırı ve gerekirse bot doğrulama
 - Demo servisten açık yapılandırmalı Supabase servisine geçiş
 
-**8 Kasım 2026 durumu:** `soz-sende` (`ckanefuhclkcvlzfmiax`) projesine dört migration uygulandı. Son migration yönetici yetkisini allowlist yanında güncel `auth.sessions` satırına bağladı; gerçek global logout sonrası eski access token yönetici RPC'sinde 403 aldı. Uzak PostgreSQL aktif-session maddesi dahil 32/32 pgTAP geçti. Edge Turnstile başarı/replay/expiry ve Auth CAPTCHA eksik/geçersiz/geçerli akışları doğrulandı; tek recovery e-postası teslim edildi. Kayıtlı ve kurgusal kayıt-dışı recovery ilk istekleri aynı başarılı HTTP/nötr UI sonucunu verdi. Production origin/hostname/header kontrolleri ve tekrarlı recovery rate-limit yan kanalı açık bırakıldı; ayrıntı `docs/GUVENLIK_KONTROL.md` içindedir.
+**9 Kasım 2026 durumu:** `soz-sende` (`ckanefuhclkcvlzfmiax`) projesine dört migration uygulandı. Son migration yönetici yetkisini allowlist yanında güncel `auth.sessions` satırına bağladı; gerçek global logout sonrası eski access token yönetici RPC'sinde 403 aldı. Uzak PostgreSQL aktif-session maddesi dahil 32/32 pgTAP geçti. Edge Turnstile başarı/replay/expiry ve Auth CAPTCHA eksik/geçersiz/geçerli akışları doğrulandı. Netlify production origin/hostname/header, insan Turnstile gönderimi, yönetici CRUD/yenileme ve canlı recovery redirect yolu geçti. Kayıtlı ve kurgusal kayıt-dışı recovery ilk istekleri aynı başarılı HTTP/nötr UI sonucunu verdi; tekrarlı recovery rate-limit yan kanalı açık bırakıldı. Ayrıntı `docs/GUVENLIK_KONTROL.md` içindedir.
 
 ### 3. Uçtan uca test, güvenlik ve mobil düzeltmeler
 
@@ -218,12 +218,12 @@ Tamamlanan denetim sonuçları `docs/GUVENLIK_KONTROL.md` içinde korunur ve bur
 
 - [x] Netlify build komutu `npm run build:live`, yayın klasörü `dist`; SPA fallback ve security header dosyaları kaynakta hazırlandı.
 - [x] Auth Site URL `https://fincan-arasi.netlify.app`, recovery redirect listesi yalnız tam `https://fincan-arasi.netlify.app/yonetici/sifre-yenile` yolu olacak şekilde uzak projeye uygulandı; yerel redirect'ler production config'den çıkarıldı.
-- [ ] Edge `ALLOWED_ORIGINS` ve `TURNSTILE_ALLOWED_HOSTNAMES` yalnız kesin production adresiyle güncellendi; Cloudflare widget hostname kaydı ve gerçek token smoke testi kullanıcı panel onayı sonrası doğrulanacak.
-- [ ] Netlify production build ortamında yalnız üç browser-safe Vite değeri ile `VITE_DATA_MODE=supabase` ve `VITE_ENABLE_DEMO_TOOLS=false` kaydedildi; uzak build/deploy sonucu bekleniyor.
-- [ ] Gerçek response üzerinde HTTPS yönlendirmesi, sertifika, HSTS, CSP, `nosniff`, frame ve Permissions-Policy başlıkları; Turnstile widget yüklemesi ve SPA fallback birlikte doğrulanmalı.
-- [ ] Son Edge sürümünün gerçekten hedef projede aktif olduğu ve frontend'in o sürüme çağrı yaptığı production smoke testinde doğrulanmalı. Bu kontrol, yukarıdaki ayrıntılı gerçek Turnstile matrisinin yerine geçmez.
-- [ ] Gerçek production recovery e-postası teslimi, linkin yalnız izinli production adrese dönmesi ve hesap varlığını ayırt etmeyen kullanıcı deneyimi doğrulanmalı.
-- [ ] Auth CAPTCHA etkinleştirildikten sonra gerçek yönetici girişi, recovery e-posta teslimi, eksik/geçersiz token reddi ve doğrudan recovery yanıt matrisi düşük e-posta kotası gözetilerek doğrulanmalı.
+- [x] Edge `ALLOWED_ORIGINS` ve `TURNSTILE_ALLOWED_HOSTNAMES` yalnız kesin production adresiyle güncellendi; Cloudflare widget aynı hostname ile kaydedildi ve canlı insan tokenlı gönderim başarılı oldu.
+- [x] Netlify production ortamında yalnız üç browser-safe Vite değeri ile `VITE_DATA_MODE=supabase` ve `VITE_ENABLE_DEMO_TOOLS=false` bulunuyor. `main` commit `2bd95c3` production deploy'u `ready` durumunda yayımlandı.
+- [x] Gerçek response üzerinde HTTP→HTTPS `301`; HTTPS `200`; HSTS, CSP, `nosniff`, `DENY` frame, referrer ve Permissions-Policy başlıkları doğrulandı. Yönetici, recovery ve bilinmeyen doğrudan yollar SPA fallback ile `200` aldı. Turnstile widget'ın tarayıcı yüklemesi ayrı maddede bekliyor.
+- [x] Son Edge sürümüne Netlify production formundan insan Turnstile tokenıyla başarılı POST yapıldı; kayıt yönetici panelinde göründü. Bu smoke testi daha önce tamamlanan ayrıntılı Turnstile matrisinin yerine kullanılmadı.
+- [x] Gerçek production recovery e-postası teslim edildi; bağlantı yalnız tam `https://fincan-arasi.netlify.app/yonetici/sifre-yenile` yolunu açtı. Parola değiştirilmedi.
+- [x] Auth CAPTCHA etkin durumdayken eksik/geçersiz token reddi, gerçek yönetici girişi, recovery teslimi ve kayıtlı/kayıt-dışı ilk yanıt matrisi doğrulandı. Tekrarlı 60 saniye zamanlama riski kota nedeniyle işletim maddesinde açık.
   - 8 Kasım gerçek kontrolü: İlk kayıttan sonra zorlamanın görünmediği raporlandı. Kullanıcı doğru projede Turnstile secret ile ayarı yeniden kaydetti; ardından giriş ve recovery için eksik/geçersiz tokenların dörtte dördü `400` CAPTCHA reddi aldı. Gerçek giriş, tek recovery teslimi ve mevcut/olmayan hesap yanıt karşılaştırması bekliyor.
 
 ### İşletim — yayın sonrasında sürekli sorumluluk
@@ -263,7 +263,8 @@ Tamamlanan denetim sonuçları `docs/GUVENLIK_KONTROL.md` içinde korunur ve bur
 - [x] Gerçek anonim/allowlist dışı/yönetici yetki matrisi ve eşzamanlı rate-limit/idempotency kontrolleri tamamlandı.
 - [x] Son Edge sürümünde gerçek Turnstile tokenıyla yeni insert/replay/expiry/action/hostname kontrolleri tamamlandı.
 - [x] Public GitHub deposu oluşturuldu ve kaynak yüklendi.
-- [ ] Netlify canlı yayını ve SPA yönlendirmesi doğrulandı.
-- [ ] GitHub ve canlı bağlantı teslim edildi.
+- [x] Netlify canlı yayını, HTTPS başlıkları ve SPA yönlendirmesi doğrulandı.
+- [x] GitHub ve canlı bağlantı README'ye eklendi.
+- [ ] Canlı 390 px görsel kontrolü tarayıcı otomasyonu kullanım limiti nedeniyle tamamlanamadı; masaüstü yönetici paneli kullanıcı ekran görüntüsünde incelendi ve önceki yerel 390/1440 ekran görüntüleri korunuyor.
 
 Backend, PostgreSQL ve uygulama içi AI ders koşulu olarak sunulmaz. Supabase PostgreSQL, farklı cihazlardan gelen kayıtların birleşmesi için ürün kararıdır. Uygulama içinde AI API'si, ML veya DL özelliği planlanmamaktadır.
