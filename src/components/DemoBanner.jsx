@@ -10,8 +10,8 @@ export function DemoBanner({ compact = false, className = "" }) {
     >
       <FlaskConical className="mt-0.5 size-4 shrink-0 text-[#a95129]" aria-hidden="true" />
       <p>
-        <strong className="font-bold">Demo — gerçek gönderim yapılmaz.</strong>{" "}
-        <span className="text-[#80654f]">Veriler bu sekmede tutulur ve sayfa yenilenince sıfırlanır.</span>
+        <strong className="font-bold">Demo — kurgusal veriler kullanılır.</strong>{" "}
+        <span className="text-[#80654f]">Değişiklikler sayfa yenilenince sıfırlanır; Supabase'e gönderilmez.</span>
       </p>
     </div>
   );

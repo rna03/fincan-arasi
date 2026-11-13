@@ -1,8 +1,15 @@
 # Fincan Arası
 
+> ## Yönetici Panelini Dene
+>
+> [Şifresiz yönetici demosunu aç](https://fincan-arasi-demo.netlify.app/yonetici)
+>
+> Demo yalnız kurgusal, bellek içi veriler kullanır; yapılan değişiklikler sayfa yenilenince sıfırlanır ve Supabase'e gönderilmez. Asıl [canlı uygulamanın](https://fincan-arasi.netlify.app) yönetici paneli Supabase Auth ve allowlist ile korunmaya devam eder.
+
 Fincan Arası, tek bir kafenin dağınık sözlü geri bildirimleri güvenli ve izlenebilir bir dijital akışta toplaması için geliştirilmiş ders projesidir. Müşteriler hesap açmadan öneri, sorun veya teşekkür iletir; önceden tanımlanmış tek yönetici ise bu kayıtları ayrı bir çalışma alanında değerlendirir.
 
 - Canlı uygulama: [https://fincan-arasi.netlify.app](https://fincan-arasi.netlify.app)
+- Şifresiz yönetici demosu: [https://fincan-arasi-demo.netlify.app/yonetici](https://fincan-arasi-demo.netlify.app/yonetici)
 - Kaynak kod: [https://github.com/rna03/fincan-arasi](https://github.com/rna03/fincan-arasi)
 - Production kaynağı: GitHub `main` dalı, yayımlanan uygulama commit'i `2bd95c3`
 
@@ -58,6 +65,12 @@ Bellek içi demo modu:
 
 ```bash
 npm run dev
+```
+
+Anahtarsız, geliştirici test araçları kapalı demo derlemesi:
+
+```bash
+npm run build:demo
 ```
 
 Gerçek Supabase modu, aşağıdaki browser-safe ortam değerleri sağlandıktan sonra:

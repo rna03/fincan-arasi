@@ -8,6 +8,7 @@
     "dev:tools": "cross-env VITE_DATA_MODE=demo VITE_ENABLE_DEMO_TOOLS=true vite",
     "dev:live": "cross-env VITE_DATA_MODE=supabase vite",
     "build": "cross-env VITE_DATA_MODE=demo vite build",
+    "build:demo": "cross-env VITE_DATA_MODE=demo VITE_ENABLE_DEMO_TOOLS=false VITE_SUPABASE_URL= VITE_SUPABASE_PUBLISHABLE_KEY= VITE_TURNSTILE_SITE_KEY= vite build",
     "build:live": "cross-env VITE_DATA_MODE=supabase vite build",
     "lint": "eslint . --max-warnings=0",
     "test": "cross-env VITE_DATA_MODE=demo vitest run",
